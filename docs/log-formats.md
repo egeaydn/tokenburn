@@ -22,3 +22,9 @@
   `last_token_usage` over-counts (217.8M vs real 212.9M input). **Use deltas of `total_token_usage`.**
 - OpenAI semantics: `input_tokens` INCLUDES `cached_input_tokens`; uncached = input - cached.
   `reasoning_output_tokens` is part of `output_tokens`.
+
+## Validation against Claude Code's own numbers
+`tokenburn daily` cost was compared with the `cost-state` totals Claude Code writes itself:
+3 of 4 sessions match to the last digit. The 4th is ~10% lower because Claude Code counted
+requests (1022 input / 336k cache-read tokens vs 5 logged calls) that never made it into the
+transcript, which is not recoverable from the logs. Expect small gaps from such unlogged side requests.

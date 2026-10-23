@@ -1,9 +1,15 @@
+import { spawn } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { Command } from "commander";
 import pc from "picocolors";
 import { aggregate, type GroupBy, totalOf } from "./core/aggregate.js";
 import { filterByDate, parseDate } from "./core/filter.js";
+import { shortenPaths } from "./core/paths.js";
+import { buildReport } from "./core/report.js";
+import { renderHtml } from "./output/html.js";
 import { renderJson } from "./output/json.js";
-import { renderTable, shortenPaths } from "./output/table.js";
+import { renderTable } from "./output/table.js";
 import { providerNames, selectProviders } from "./providers/index.js";
 import type { UsageRecord } from "./providers/types.js";
 
@@ -14,18 +20,49 @@ interface Options {
   json?: boolean;
 }
 
+interface ReportOptions extends Options {
+  output: string;
+  open?: boolean;
+  anonymize?: boolean;
+}
+
+/** Shared `--since/--until/--provider` handling. */
+function selectRecords(opts: Options) {
+  const since = opts.since ? parseDate(opts.since) : undefined;
+  const until = opts.until ? parseDate(opts.until, true) : undefined;
+  if (since && until && since > until) throw new Error("--since must not be after --until.");
+  const names = opts.provider?.split(",").map((s) => s.trim());
+  return filterByDate(allRecords(names), { since, until });
+}
+
+function openInBrowser(file: string) {
+  const [cmd, args]: [string, string[]] =
+    process.platform === "win32"
+      ? ["cmd", ["/c", "start", "", file]]
+      : process.platform === "darwin"
+        ? ["open", [file]]
+        : ["xdg-open", [file]];
+  spawn(cmd, args, { detached: true, stdio: "ignore" })
+    .on("error", () => {})
+    .unref();
+}
+
+async function report(opts: ReportOptions) {
+  const data = await buildReport(selectRecords(opts), { anonymize: opts.anonymize });
+  const file = resolve(opts.output);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, renderHtml(data));
+  console.log(`${pc.green("Report written:")} ${file}`);
+  console.log(pc.dim("Generated locally. The file makes no network requests."));
+  if (opts.open) openInBrowser(file);
+}
+
 async function* allRecords(names: string[] | undefined): AsyncGenerator<UsageRecord> {
   for (const p of selectProviders(names)) yield* p.read();
 }
 
 async function run(by: GroupBy, label: string, opts: Options) {
-  const since = opts.since ? parseDate(opts.since) : undefined;
-  const until = opts.until ? parseDate(opts.until, true) : undefined;
-  if (since && until && since > until) throw new Error("--since must not be after --until.");
-  const names = opts.provider?.split(",").map((s) => s.trim());
-
-  const records = filterByDate(allRecords(names), { since, until });
-  const rows = await aggregate(records, by);
+  const rows = await aggregate(selectRecords(opts), by);
   if (opts.json) {
     console.log(renderJson(rows, totalOf(rows)));
   } else if (rows.length === 0) {
@@ -43,12 +80,15 @@ async function run(by: GroupBy, label: string, opts: Options) {
   }
 }
 
-function withCommonOptions(cmd: Command): Command {
+function withFilters(cmd: Command): Command {
   return cmd
     .option("--since <date>", "only usage on or after this day (YYYY-MM-DD)")
     .option("--until <date>", "only usage on or before this day (YYYY-MM-DD)")
-    .option("--provider <names>", `comma separated: ${providerNames.join(", ")}`)
-    .option("--json", "machine readable output");
+    .option("--provider <names>", `comma separated: ${providerNames.join(", ")}`);
+}
+
+function withCommonOptions(cmd: Command): Command {
+  return withFilters(cmd).option("--json", "machine readable output");
 }
 
 const program = new Command();
@@ -67,6 +107,14 @@ withCommonOptions(program.command("monthly").description("Usage and cost per mon
 withCommonOptions(
   program.command("project").description("Usage and cost per project (working directory)"),
 ).action((o) => run("project", "Project", o));
+
+withFilters(
+  program.command("report").description("Write a self-contained HTML report (works offline)"),
+)
+  .option("-o, --output <file>", "where to write the report", "tokenburn-report.html")
+  .option("--open", "open the report in your browser when done")
+  .option("--anonymize", "replace project names with Project 1, 2, ... for safe sharing")
+  .action((o) => report(o));
 
 try {
   await program.parseAsync();

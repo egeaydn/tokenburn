@@ -3,6 +3,7 @@ import pc from "picocolors";
 import { aggregate, type GroupBy, totalOf } from "./core/aggregate.js";
 import { renderTable } from "./output/table.js";
 import { claudeCodeProvider } from "./providers/claude-code.js";
+import { codexProvider } from "./providers/codex.js";
 import type { Provider } from "./providers/types.js";
 
 async function* allRecords(providers: Provider[]) {
@@ -10,7 +11,7 @@ async function* allRecords(providers: Provider[]) {
 }
 
 async function run(by: GroupBy, label: string) {
-  const rows = await aggregate(allRecords([claudeCodeProvider()]), by);
+  const rows = await aggregate(allRecords([claudeCodeProvider(), codexProvider()]), by);
   if (rows.length === 0) {
     console.log(pc.yellow("No usage data found."));
     return;

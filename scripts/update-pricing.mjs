@@ -10,18 +10,26 @@ const res = await fetch(SOURCE);
 if (!res.ok) throw new Error(`Failed to fetch price list: ${res.status}`);
 const all = await res.json();
 
+// Provider-native names only (no bedrock/azure/vertex prefixes). Extend per provider adapter.
+const PROVIDERS = {
+  anthropic: { match: /^claude-/, writeFactor: 1.25, write1hFactor: 2 },
+  // OpenAI does not bill cache writes separately unless the price list says so.
+  openai: { match: /^(gpt-|o\d|codex-)/, writeFactor: 1, write1hFactor: 1 },
+};
+
 const models = {};
 for (const [name, p] of Object.entries(all)) {
-  // Provider-native names only (no bedrock/vertex prefixes); extend per provider adapter.
-  if (p.litellm_provider !== "anthropic" || !name.startsWith("claude-")) continue;
+  const cfg = PROVIDERS[p.litellm_provider];
+  if (!cfg || !cfg.match.test(name)) continue;
   if (p.input_cost_per_token == null || p.output_cost_per_token == null) continue;
-  const cacheWrite5m = p.cache_creation_input_token_cost ?? p.input_cost_per_token * 1.25;
+  const input = p.input_cost_per_token;
+  const cacheWrite5m = p.cache_creation_input_token_cost ?? input * cfg.writeFactor;
   models[name] = {
-    input: round(p.input_cost_per_token),
+    input: round(input),
     output: round(p.output_cost_per_token),
-    cacheRead: round(p.cache_read_input_token_cost ?? p.input_cost_per_token * 0.1),
+    cacheRead: round(p.cache_read_input_token_cost ?? input * 0.1),
     cacheWrite5m: round(cacheWrite5m),
-    cacheWrite1h: round(p.cache_creation_input_token_cost_above_1hr ?? p.input_cost_per_token * 2),
+    cacheWrite1h: round(p.cache_creation_input_token_cost_above_1hr ?? input * cfg.write1hFactor),
   };
 }
 

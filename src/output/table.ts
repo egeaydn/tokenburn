@@ -9,7 +9,7 @@ function cost(row: Row): string {
   return row.unpricedModels.length > 0 ? `${base}*` : base;
 }
 
-/** Strips the `claude-` prefix to keep the models column narrow. */
+/** Strips the vendor prefix to keep the models column narrow. */
 const shortModel = (m: string) => m.replace(/^claude-/, "");
 
 export function renderTable(rows: Row[], total: Row, firstColumn: string): string {

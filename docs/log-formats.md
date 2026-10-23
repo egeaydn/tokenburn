@@ -28,3 +28,11 @@
 3 of 4 sessions match to the last digit. The 4th is ~10% lower because Claude Code counted
 requests (1022 input / 336k cache-read tokens vs 5 logged calls) that never made it into the
 transcript, which is not recoverable from the logs. Expect small gaps from such unlogged side requests.
+
+## Codex: running totals reset
+`total_token_usage` is not monotonic within a file: in one 434 MB session it reset twice (a new
+thread/epoch starting from 0 in the same rollout). The final total therefore covers only the last
+epoch. Correct accounting is delta-per-event, falling back to `last_token_usage` when a counter
+goes backwards: this reproduces `final total + max of every earlier epoch` exactly
+(215,383,488 = 212,879,819 + 1,128,823 + 1,374,846 input tokens).
+Codex plans like `free` do not bill per token: the cost shown is the API-equivalent price.

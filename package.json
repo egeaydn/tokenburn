@@ -1,5 +1,5 @@
 {
-  "name": "tokenburn",
+  "name": "tokenburn-ai",
   "version": "0.1.0",
   "description": "Local-only spend tracker for AI coding tools (Claude Code, Codex CLI). See what each repo costs you.",
   "type": "module",

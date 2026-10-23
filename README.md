@@ -3,11 +3,11 @@
 **See what every repo costs you across Claude Code and Codex CLI, from one command, without any of your data leaving your machine.**
 
 [![CI](https://github.com/egeaydn/tokenburn/actions/workflows/ci.yml/badge.svg)](https://github.com/egeaydn/tokenburn/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/tokenburn.svg)](https://www.npmjs.com/package/tokenburn)
-[![license](https://img.shields.io/npm/l/tokenburn.svg)](https://github.com/egeaydn/tokenburn/blob/master/LICENSE)
+[![npm](https://img.shields.io/npm/v/tokenburn-ai.svg)](https://www.npmjs.com/package/tokenburn-ai)
+[![license](https://img.shields.io/npm/l/tokenburn-ai.svg)](https://github.com/egeaydn/tokenburn/blob/master/LICENSE)
 
 ```bash
-npx tokenburn
+npx tokenburn-ai
 ```
 
 tokenburn reads the session logs your AI coding tools already write to disk, merges them into one picture and shows where the tokens (and dollars) go: per day, per month, and, the part most tools skip, **per project**.
@@ -26,13 +26,20 @@ tokenburn reads the session logs your AI coding tools already write to disk, mer
 ## Quick start
 
 ```bash
-npx tokenburn                  # daily usage and cost (default command)
-npx tokenburn monthly
-npx tokenburn project          # which repo costs what
-npx tokenburn report --open    # shareable HTML report
+npx tokenburn-ai                  # daily usage and cost (default command)
+npx tokenburn-ai monthly
+npx tokenburn-ai project          # which repo costs what
+npx tokenburn-ai report --open    # shareable HTML report
 ```
 
 Requires Node 20 or newer. No install, no account, no config.
+
+The npm package is called `tokenburn-ai` (the name `tokenburn` was taken by a lookalike). To get a short permanent command instead of `npx`:
+
+```bash
+npm install -g tokenburn-ai
+tokenburn project
+```
 
 ```text
 ┌────────────┬─────────────┬───────────┬────────────┬───────────────┬─────────────┬─────────┐

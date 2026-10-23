@@ -8,9 +8,13 @@ export interface UsageRecord {
   sessionId: string;
   /** Uncached input tokens. */
   inputTokens: number;
+  /** Includes reasoning/thinking tokens. */
   outputTokens: number;
   cacheReadTokens: number;
-  cacheWriteTokens: number;
+  /** Cache writes with the default 5 minute TTL. */
+  cacheWrite5mTokens: number;
+  /** Cache writes with the 1 hour TTL (priced higher). */
+  cacheWrite1hTokens: number;
 }
 
 export interface Provider {

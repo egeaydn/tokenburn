@@ -72,13 +72,13 @@ Paket yöneticisi: `pnpm`. Hedef: Node 20+.
 - [ ] GitHub Actions ile CI ekle
 
 ### Faz 1: Tek araçla çalışan çekirdek (hafta sonu)
-- [ ] **Önce kendi makinendeki log dosyalarına bak** (Claude Code genelde `~/.claude/` altında JSONL tutar; sürüme göre değişebilir, kendi gözünle doğrula). Gerçek veriye bakmadan parser yazma.
-- [ ] İlk adapter'ı yaz, `zod` ile satırları doğrula, bozuk satırı sessizce atla
-- [ ] Token toplama ve maliyet hesabı
-- [ ] Fiyat tablosunu koda gömme, ayrı bir JSON'da tut (LiteLLM'in herkese açık model fiyat listesi iyi bir başlangıç, güncelliğini kontrol et)
-- [ ] Komutlar: `daily`, `monthly`
-- [ ] Çıktı: renkli terminal tablosu
-- [ ] Örnek log fixture'larıyla birim testleri
+- [x] **Önce kendi makinendeki log dosyalarına bak** (Claude Code genelde `~/.claude/` altında JSONL tutar; sürüme göre değişebilir, kendi gözünle doğrula). Gerçek veriye bakmadan parser yazma.
+- [x] İlk adapter'ı yaz, `zod` ile satırları doğrula, bozuk satırı sessizce atla
+- [x] Token toplama ve maliyet hesabı
+- [x] Fiyat tablosunu koda gömme, ayrı bir JSON'da tut (LiteLLM'in herkese açık model fiyat listesi iyi bir başlangıç, güncelliğini kontrol et)
+- [x] Komutlar: `daily`, `monthly`
+- [x] Çıktı: renkli terminal tablosu
+- [x] Örnek log fixture'larıyla birim testleri
 
 **Çıkış kriteri:** `npx aracadi daily` kendi verinde doğru sonucu basıyor.
 

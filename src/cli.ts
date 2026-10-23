@@ -3,7 +3,7 @@ import pc from "picocolors";
 import { aggregate, type GroupBy, totalOf } from "./core/aggregate.js";
 import { filterByDate, parseDate } from "./core/filter.js";
 import { renderJson } from "./output/json.js";
-import { renderTable } from "./output/table.js";
+import { renderTable, shortenPaths } from "./output/table.js";
 import { providerNames, selectProviders } from "./providers/index.js";
 import type { UsageRecord } from "./providers/types.js";
 
@@ -31,7 +31,15 @@ async function run(by: GroupBy, label: string, opts: Options) {
   } else if (rows.length === 0) {
     console.log(pc.yellow("No usage data found."));
   } else {
-    console.log(renderTable(rows, totalOf(rows), label));
+    const isProject = by === "project";
+    const short = isProject ? shortenPaths(rows.map((r) => r.key)) : undefined;
+    console.log(
+      renderTable(rows, totalOf(rows), {
+        label,
+        detail: isProject ? "tools" : "models",
+        displayKey: short && ((key) => short.get(key) ?? key),
+      }),
+    );
   }
 }
 
@@ -55,6 +63,10 @@ withCommonOptions(program.command("daily").description("Usage and cost per day")
 withCommonOptions(program.command("monthly").description("Usage and cost per month")).action((o) =>
   run("month", "Month", o),
 );
+
+withCommonOptions(
+  program.command("project").description("Usage and cost per project (working directory)"),
+).action((o) => run("project", "Project", o));
 
 try {
   await program.parseAsync();

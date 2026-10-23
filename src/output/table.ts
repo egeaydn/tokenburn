@@ -12,18 +12,56 @@ function cost(row: Row): string {
 /** Strips the vendor prefix to keep the models column narrow. */
 const shortModel = (m: string) => m.replace(/^claude-/, "");
 
-export function renderTable(rows: Row[], total: Row, firstColumn: string): string {
+export interface TableOptions {
+  /** Header of the first column ("Date", "Month", "Project"). */
+  label: string;
+  /** Second column: the models used, or the tools they ran in. */
+  detail: "models" | "tools";
+  /** Maps a row key to what is printed in the first column. */
+  displayKey?: (key: string) => string;
+}
+
+/**
+ * Shortest trailing part of each path that is still unique among all of them:
+ * `/a/web` and `/b/web` stay apart, while a lone `/a/api` is just `api`.
+ */
+export function shortenPaths(paths: string[]): Map<string, string> {
+  const parts = new Map(paths.map((p) => [p, p.split("/").filter(Boolean)]));
+  const out = new Map<string, string>();
+  for (const [path, segs] of parts) {
+    let n = 1;
+    const suffix = (s: string[], k: number) => s.slice(-k).join("/");
+    while (
+      n < segs.length &&
+      [...parts].some(([other, o]) => other !== path && suffix(o, n) === suffix(segs, n))
+    ) {
+      n++;
+    }
+    out.set(path, suffix(segs, n) || path);
+  }
+  return out;
+}
+
+export function renderTable(rows: Row[], total: Row, opts: TableOptions): string {
   const table = new Table({
-    head: [firstColumn, "Models", "Input", "Output", "Cache Read", "Cache Write", "Cost"].map((h) =>
-      pc.cyan(h),
-    ),
+    head: [
+      opts.label,
+      opts.detail === "models" ? "Models" : "Tools",
+      "Input",
+      "Output",
+      "Cache Read",
+      "Cache Write",
+      "Cost",
+    ].map((h) => pc.cyan(h)),
     colAligns: ["left", "left", "right", "right", "right", "right", "right"],
     style: { head: [], border: [] },
   });
+  const detail = (r: Row) =>
+    opts.detail === "models" ? r.models.map(shortModel).join("\n") : r.providers.join("\n");
   for (const r of rows) {
     table.push([
-      r.key,
-      r.models.map(shortModel).join("\n"),
+      opts.displayKey ? opts.displayKey(r.key) : r.key,
+      detail(r),
       num(r.inputTokens),
       num(r.outputTokens),
       num(r.cacheReadTokens),

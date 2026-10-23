@@ -44,6 +44,15 @@ export function defaultCodexDir(): string {
 const sessionIdOf = (file: string) =>
   /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.jsonl/.exec(basename(file))?.[1];
 
+/**
+ * The Codex desktop app starts repo-less chats in a throwaway folder
+ * (`.../Codex/<date>/<prompt-slug>`). Those would each show up as their own "project", so
+ * they are grouped under one label.
+ */
+const SCRATCH_CHAT = /[\\/]Codex[\\/]\d{4}-\d{2}-\d{2}[\\/][^\\/]+$/;
+export const CODEX_CHATS = "(codex chats)";
+export const projectOf = (cwd: string) => (SCRATCH_CHAT.test(cwd) ? CODEX_CHATS : cwd);
+
 const zero: Usage = {
   input_tokens: 0,
   cached_input_tokens: 0,
@@ -112,10 +121,10 @@ export async function* readSession(file: string): AsyncGenerator<UsageRecord> {
 
     if (type === "session_meta") {
       sessionId = payload.id ?? sessionId;
-      project = payload.cwd ?? project;
+      project = projectOf(payload.cwd ?? project);
     } else if (type === "turn_context") {
       model = payload.model ?? model;
-      project = payload.cwd ?? project;
+      project = projectOf(payload.cwd ?? project);
     } else if (type === "event_msg" && payload.type === "token_count" && payload.info) {
       const total = payload.info.total_token_usage;
       // Consecutive events can repeat the same running total: only count what changed.

@@ -1,11 +1,13 @@
 import type { UsageRecord } from "../providers/types.js";
 import { costOf, defaultPrices, type PriceTable } from "./pricing.js";
 
-export type GroupBy = "day" | "month";
+export type GroupBy = "day" | "month" | "project";
 
 export interface Row {
   key: string;
   models: string[];
+  /** Tools (providers) that contributed to this row. */
+  providers: string[];
   inputTokens: number;
   outputTokens: number;
   cacheReadTokens: number;
@@ -19,10 +21,39 @@ export interface Row {
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** Local-time bucket key, so "today" matches the user's wall clock. */
-export function bucketKey(date: Date, by: GroupBy): string {
+export function bucketKey(date: Date, by: "day" | "month"): string {
   const ym = `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
   return by === "month" ? ym : `${ym}-${pad(date.getDate())}`;
 }
+
+/**
+ * Makes the same folder compare equal across tools: Claude Code logs `c:\Users\me\repo`,
+ * Codex logs `C:\Users\me\repo`.
+ */
+export function normalizeProject(path: string): string {
+  const slashed = path.replaceAll("\\", "/").replace(/(?<=.)\/+$/, "");
+  return slashed.replace(/^([a-z]):/, (_, drive: string) => `${drive.toUpperCase()}:`);
+}
+
+function keyOf(r: UsageRecord, by: GroupBy): string {
+  return by === "project" ? normalizeProject(r.project) : bucketKey(r.timestamp, by);
+}
+
+const emptyRow = (key: string): Row => ({
+  key,
+  models: [],
+  providers: [],
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheReadTokens: 0,
+  cacheWriteTokens: 0,
+  costUSD: 0,
+  unpricedModels: [],
+});
+
+const addUnique = (list: string[], value: string) => {
+  if (!list.includes(value)) list.push(value);
+};
 
 export async function aggregate(
   records: AsyncIterable<UsageRecord> | Iterable<UsageRecord>,
@@ -31,56 +62,40 @@ export async function aggregate(
 ): Promise<Row[]> {
   const rows = new Map<string, Row>();
   for await (const r of records) {
-    const key = bucketKey(r.timestamp, by);
+    const key = keyOf(r, by);
     let row = rows.get(key);
     if (!row) {
-      row = {
-        key,
-        models: [],
-        inputTokens: 0,
-        outputTokens: 0,
-        cacheReadTokens: 0,
-        cacheWriteTokens: 0,
-        costUSD: 0,
-        unpricedModels: [],
-      };
+      row = emptyRow(key);
       rows.set(key, row);
     }
     row.inputTokens += r.inputTokens;
     row.outputTokens += r.outputTokens;
     row.cacheReadTokens += r.cacheReadTokens;
     row.cacheWriteTokens += r.cacheWrite5mTokens + r.cacheWrite1hTokens;
-    if (!row.models.includes(r.model)) row.models.push(r.model);
+    addUnique(row.models, r.model);
+    addUnique(row.providers, r.provider);
     const cost = costOf(r, prices);
-    if (cost === null) {
-      if (!row.unpricedModels.includes(r.model)) row.unpricedModels.push(r.model);
-    } else {
-      row.costUSD += cost;
-    }
+    if (cost === null) addUnique(row.unpricedModels, r.model);
+    else row.costUSD += cost;
   }
-  return [...rows.values()].sort((a, b) => a.key.localeCompare(b.key));
+  const sorted = [...rows.values()];
+  // Time buckets read chronologically; projects read biggest spender first.
+  return by === "project"
+    ? sorted.sort((a, b) => b.costUSD - a.costUSD || a.key.localeCompare(b.key))
+    : sorted.sort((a, b) => a.key.localeCompare(b.key));
 }
 
 export function totalOf(rows: Row[]): Row {
-  const total: Row = {
-    key: "Total",
-    models: [],
-    inputTokens: 0,
-    outputTokens: 0,
-    cacheReadTokens: 0,
-    cacheWriteTokens: 0,
-    costUSD: 0,
-    unpricedModels: [],
-  };
+  const total = emptyRow("Total");
   for (const r of rows) {
     total.inputTokens += r.inputTokens;
     total.outputTokens += r.outputTokens;
     total.cacheReadTokens += r.cacheReadTokens;
     total.cacheWriteTokens += r.cacheWriteTokens;
     total.costUSD += r.costUSD;
-    for (const m of r.models) if (!total.models.includes(m)) total.models.push(m);
-    for (const m of r.unpricedModels)
-      if (!total.unpricedModels.includes(m)) total.unpricedModels.push(m);
+    for (const m of r.models) addUnique(total.models, m);
+    for (const p of r.providers) addUnique(total.providers, p);
+    for (const m of r.unpricedModels) addUnique(total.unpricedModels, m);
   }
   return total;
 }

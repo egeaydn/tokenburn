@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { aggregate, normalizeProject, totalOf } from "../src/core/aggregate.js";
-import { shortenPaths } from "../src/output/table.js";
+import { shortenPaths } from "../src/core/paths.js";
 import { CODEX_CHATS, projectOf } from "../src/providers/codex.js";
 import type { UsageRecord } from "../src/providers/types.js";
 

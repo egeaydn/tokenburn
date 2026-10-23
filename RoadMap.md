@@ -91,9 +91,9 @@ Paket yöneticisi: `pnpm`. Hedef: Node 20+.
 - [x] Bilinmeyen model gelirse çökmek yerine "fiyat bilinmiyor" göster
 
 ### Faz 3: Paylaşılabilir çıktı (1 hafta)
-- [ ] `--html` ile tek dosyalık rapor: günlük harcama grafiği, araç/model/proje dağılımı, toplam özet
-- [ ] Şık bir tasarım (insanlar ekran görüntüsünü paylaşır, yıldızın büyük kısmı buradan gelir)
-- [ ] Rapor tamamen yerelde üretilsin; README'de bunu vurgula
+- [x] `--html` ile tek dosyalık rapor: günlük harcama grafiği, araç/model/proje dağılımı, toplam özet
+- [x] Şık bir tasarım (insanlar ekran görüntüsünü paylaşır, yıldızın büyük kısmı buradan gelir)
+- [x] Rapor tamamen yerelde üretilsin; README'de bunu vurgula
 
 ### Faz 4: Yayın hazırlığı (3-4 gün)
 - [ ] README: tek cümle açıklama, **GIF veya ekran görüntüsü**, 3 satırlık kurulum, kullanım örnekleri, desteklenen araç tablosu, gizlilik notu

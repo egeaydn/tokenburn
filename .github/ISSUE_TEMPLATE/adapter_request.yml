@@ -1,0 +1,24 @@
+name: Support for another tool
+description: Ask for (or offer to write) an adapter for another AI coding tool
+labels: [adapter, good first issue]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Tool
+      description: Name and version
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Where does it store session logs locally?
+      description: "Path and format. Does it record token counts per request? If not, it cannot be supported honestly."
+    validations:
+      required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to write this adapter (see docs/writing-an-adapter.md)

@@ -1,6 +1,6 @@
 {
   "name": "tokenburn",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Local-only spend tracker for AI coding tools (Claude Code, Codex CLI). See what each repo costs you.",
   "type": "module",
   "packageManager": "pnpm@10.26.0",
@@ -10,7 +10,8 @@
   },
   "files": [
     "dist",
-    "data"
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=20"
@@ -21,16 +22,23 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "prepublishOnly": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "demo": "tsx scripts/demo.ts",
+    "update-pricing": "node scripts/update-pricing.mjs"
   },
   "keywords": [
     "claude-code",
     "codex",
+    "codex-cli",
+    "ai-coding",
     "token",
     "cost",
     "usage",
+    "spend",
+    "tracker",
     "cli",
-    "ai"
+    "llm"
   ],
   "dependencies": {
     "cli-table3": "^0.6.5",
@@ -47,5 +55,14 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
+  },
+  "author": "Ege Aydın",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/egeaydn/tokenburn.git"
+  },
+  "homepage": "https://github.com/egeaydn/tokenburn#readme",
+  "bugs": {
+    "url": "https://github.com/egeaydn/tokenburn/issues"
   }
 }

@@ -96,12 +96,12 @@ Paket yöneticisi: `pnpm`. Hedef: Node 20+.
 - [x] Rapor tamamen yerelde üretilsin; README'de bunu vurgula
 
 ### Faz 4: Yayın hazırlığı (3-4 gün)
-- [ ] README: tek cümle açıklama, **GIF veya ekran görüntüsü**, 3 satırlık kurulum, kullanım örnekleri, desteklenen araç tablosu, gizlilik notu
-- [ ] npm'e yayınla
-- [ ] Repo topic'lerini ve açıklamasını ekle
-- [ ] `good first issue` etiketli 3-4 issue aç (ör. "X aracı için adapter yaz")
-- [ ] `CONTRIBUTING.md` ve adapter yazma rehberi
-- [ ] Issue şablonları, CI rozeti
+- [x] README: tek cümle açıklama, **GIF veya ekran görüntüsü**, 3 satırlık kurulum, kullanım örnekleri, desteklenen araç tablosu, gizlilik notu
+- [x] npm'e yayınla
+- [x] Repo topic'lerini ve açıklamasını ekle
+- [x] `good first issue` etiketli 3-4 issue aç (ör. "X aracı için adapter yaz")
+- [x] `CONTRIBUTING.md` ve adapter yazma rehberi
+- [x] Issue şablonları, CI rozeti
 
 ### Faz 5: Tanıtım ve büyüme
 - [ ] Show HN, r/ClaudeAI, r/programming ve ilgili subreddit'ler, dev.to

@@ -83,12 +83,12 @@ Paket yöneticisi: `pnpm`. Hedef: Node 20+.
 **Çıkış kriteri:** `npx aracadi daily` kendi verinde doğru sonucu basıyor.
 
 ### Faz 2: Farkı yaratan kısım (1-2 hafta)
-- [ ] İkinci adapter (Codex CLI vb.) ve ortak formata normalleştirme
-- [ ] **Proje bazlı görünüm:** "hangi repoya ne kadar harcadım"
-- [ ] `--json` çıktısı
-- [ ] Tarih filtreleri: `--since`, `--until`
-- [ ] Araç filtresi: `--provider`
-- [ ] Bilinmeyen model gelirse çökmek yerine "fiyat bilinmiyor" göster
+- [x] İkinci adapter (Codex CLI vb.) ve ortak formata normalleştirme
+- [x] **Proje bazlı görünüm:** "hangi repoya ne kadar harcadım"
+- [x] `--json` çıktısı
+- [x] Tarih filtreleri: `--since`, `--until`
+- [x] Araç filtresi: `--provider`
+- [x] Bilinmeyen model gelirse çökmek yerine "fiyat bilinmiyor" göster
 
 ### Faz 3: Paylaşılabilir çıktı (1 hafta)
 - [ ] `--html` ile tek dosyalık rapor: günlük harcama grafiği, araç/model/proje dağılımı, toplam özet

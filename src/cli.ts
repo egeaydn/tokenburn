@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { Command } from "commander";
 import pc from "picocolors";
+import pkg from "../package.json" with { type: "json" };
 import { aggregate, type GroupBy, totalOf } from "./core/aggregate.js";
 import { filterByDate, parseDate } from "./core/filter.js";
 import { shortenPaths } from "./core/paths.js";
@@ -95,11 +96,11 @@ const program = new Command();
 program
   .name("tokenburn")
   .description("Local spend tracker for AI coding tools. Nothing leaves your machine.")
-  .version("0.0.0");
+  .version(pkg.version);
 
-withCommonOptions(program.command("daily").description("Usage and cost per day")).action((o) =>
-  run("day", "Date", o),
-);
+withCommonOptions(
+  program.command("daily", { isDefault: true }).description("Usage and cost per day (default)"),
+).action((o) => run("day", "Date", o));
 withCommonOptions(program.command("monthly").description("Usage and cost per month")).action((o) =>
   run("month", "Month", o),
 );

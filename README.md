@@ -82,6 +82,19 @@ Options shared by all of them:
 | `--since <date>` / `--until <date>` | `YYYY-MM-DD`, local time, both inclusive |
 | `--provider <names>` | `claude-code`, `codex`, or both comma separated |
 | `--json` | Machine-readable output (`daily`, `monthly`, `project`) |
+| `--csv` | CSV output with a header, usage rows and a total (`daily`, `monthly`, `project`) |
+
+Export a report for a spreadsheet:
+
+```bash
+tokenburn project --csv > usage.csv
+tokenburn daily --csv --since 2026-10-01 --until 2026-10-31 > october.csv
+```
+
+`--csv` and `--json` are mutually exclusive. CSV uses the same fields as JSON rows, including
+full project paths and unrounded numeric values. The `models`, `providers` and `unpricedModels`
+cells contain JSON arrays, so unknown-price models remain visible. Fields containing commas,
+quotes or line breaks are quoted, and an empty report still includes the header and a zero total.
 
 `report` also takes `-o, --output <file>`, `--open` and `--anonymize` (replaces project names with `Project 1..N` so you can share a screenshot).
 

@@ -1,13 +1,14 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import pc from "picocolors";
 import pkg from "../package.json" with { type: "json" };
 import { aggregate, type GroupBy, totalOf } from "./core/aggregate.js";
 import { filterByDate, parseDate } from "./core/filter.js";
 import { shortenPaths } from "./core/paths.js";
 import { buildReport } from "./core/report.js";
+import { renderCsv } from "./output/csv.js";
 import { renderHtml } from "./output/html.js";
 import { renderJson } from "./output/json.js";
 import { renderTable } from "./output/table.js";
@@ -19,6 +20,7 @@ interface Options {
   until?: string;
   provider?: string;
   json?: boolean;
+  csv?: boolean;
 }
 
 interface ReportOptions extends Options {
@@ -66,6 +68,8 @@ async function run(by: GroupBy, label: string, opts: Options) {
   const rows = await aggregate(selectRecords(opts), by);
   if (opts.json) {
     console.log(renderJson(rows, totalOf(rows)));
+  } else if (opts.csv) {
+    console.log(renderCsv(rows, totalOf(rows)));
   } else if (rows.length === 0) {
     console.log(pc.yellow("No usage data found."));
   } else {
@@ -89,7 +93,11 @@ function withFilters(cmd: Command): Command {
 }
 
 function withCommonOptions(cmd: Command): Command {
-  return withFilters(cmd).option("--json", "machine readable output");
+  return withFilters(cmd)
+    .option("--json", "machine readable output")
+    .addOption(
+      new Option("--csv", "comma-separated output with a header and total").conflicts("json"),
+    );
 }
 
 const program = new Command();

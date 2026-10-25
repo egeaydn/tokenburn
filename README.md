@@ -27,8 +27,10 @@ tokenburn reads the session logs your AI coding tools already write to disk, mer
 
 ```bash
 npx tokenburn-ai                  # daily usage and cost (default command)
+npx tokenburn-ai today            # or: week, --last 14d
 npx tokenburn-ai monthly
 npx tokenburn-ai project          # which repo costs what
+npx tokenburn-ai model            # which model costs what
 npx tokenburn-ai report --open    # shareable HTML report
 ```
 
@@ -97,9 +99,24 @@ tokenburn project --csv > usage.csv
 tokenburn daily --csv --since 2026-10-01 --until 2026-10-31 > october.csv
 ```
 
+Trim or narrow the output:
+
+```bash
+tokenburn model --top 3                 # the three most expensive models
+tokenburn project --model opus --last 30d
+tokenburn week --provider codex
+```
+
+Fail a script or CI job when spending crosses a limit (the warning goes to stderr, so `--json` and `--csv` output stay clean):
+
+```bash
+tokenburn monthly --since 2026-10-01 --budget 200 || echo "over budget"
+```
+
 `--csv` and `--json` are mutually exclusive. CSV uses the same fields as JSON rows, including
 full project paths and unrounded numeric values. The `models`, `providers` and `unpricedModels`
-cells contain JSON arrays, so unknown-price models remain visible. Fields containing commas,
+cells contain JSON arrays, so unknown-price models remain visible. Every row also carries
+`cacheSavedUSD`, the net saving from prompt caching (see below). Fields containing commas,
 quotes or line breaks are quoted, and an empty report still includes the header and a zero total.
 
 `report` also takes `-o, --output <file>`, `--open` and `--anonymize` (replaces project names with `Project 1..N` so you can share a screenshot).
@@ -116,6 +133,14 @@ Everything happens on your machine. tokenburn only reads local log files, never 
 - Claude Code splits one response over several log lines; tokenburn counts each response once. Codex keeps a running total that can reset; tokenburn counts the change between events. The details, verified against real logs, are in [docs/log-formats.md](https://github.com/egeaydn/tokenburn/blob/master/docs/log-formats.md).
 
 Cross-check: on sessions whose log is complete, the cost matches the totals Claude Code records itself, to the last digit.
+
+## Cache savings
+
+Table output ends with a line like `Cache: 69% of input tokens served from cache, net saving $12.34`.
+
+- The share is cache reads divided by all input-side tokens (uncached input, cache reads and cache writes).
+- The saving is what cache reads would have cost at the plain input price, minus what they cost at the cache-read price, minus the extra you pay for cache writes. It can be negative when you write to the cache a lot and rarely read from it.
+- Models without a known price contribute nothing to the saving, the same way they are left out of the cost.
 
 ## Limitations
 

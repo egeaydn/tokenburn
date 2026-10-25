@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- `--csv` output for `daily`, `monthly` and `project`
+- `--budget <usd>`: warn on stderr and exit with code 1 when total cost exceeds the limit
+- `model` command, plus `--model` and `--top` filters
+- `today` and `week` commands, and `--last 7d` / `--last 2w`
+- Cache hit rate and net cache saving under the table; new `cacheSavedUSD` field in JSON and CSV
+
 ## 0.1.0
 
 First release.

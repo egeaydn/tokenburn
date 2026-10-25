@@ -83,6 +83,7 @@ Options shared by all of them:
 | `--provider <names>` | `claude-code`, `codex`, or both comma separated |
 | `--json` | Machine-readable output (`daily`, `monthly`, `project`) |
 | `--csv` | CSV output with a header, usage rows and a total (`daily`, `monthly`, `project`) |
+| `--budget <usd>` | Print a warning to stderr and exit with code 1 if total cost exceeds the amount (`daily`, `monthly`, `project`) |
 
 Export a report for a spreadsheet:
 

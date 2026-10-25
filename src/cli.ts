@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { Command, Option } from "commander";
+import { Command, InvalidArgumentError, Option } from "commander";
 import pc from "picocolors";
 import pkg from "../package.json" with { type: "json" };
 import { aggregate, type GroupBy, totalOf } from "./core/aggregate.js";
@@ -21,6 +21,7 @@ interface Options {
   provider?: string;
   json?: boolean;
   csv?: boolean;
+  budget?: number;
 }
 
 interface ReportOptions extends Options {
@@ -29,7 +30,6 @@ interface ReportOptions extends Options {
   anonymize?: boolean;
 }
 
-/** Shared `--since/--until/--provider` handling. */
 function selectRecords(opts: Options) {
   const since = opts.since ? parseDate(opts.since) : undefined;
   const until = opts.until ? parseDate(opts.until, true) : undefined;
@@ -66,6 +66,7 @@ async function* allRecords(names: string[] | undefined): AsyncGenerator<UsageRec
 
 async function run(by: GroupBy, label: string, opts: Options) {
   const rows = await aggregate(selectRecords(opts), by);
+  const spent = totalOf(rows).costUSD;
   if (opts.json) {
     console.log(renderJson(rows, totalOf(rows)));
   } else if (opts.csv) {
@@ -83,6 +84,20 @@ async function run(by: GroupBy, label: string, opts: Options) {
       }),
     );
   }
+  // stderr keeps --json/--csv stdout parseable; exit 1 lets CI fail on overspend.
+  if (opts.budget !== undefined && spent > opts.budget) {
+    console.error(
+      pc.red(`Over budget: $${spent.toFixed(2)} spent, limit $${opts.budget.toFixed(2)}.`),
+    );
+    process.exitCode = 1;
+  }
+}
+
+function parseBudget(value: string): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0)
+    throw new InvalidArgumentError("must be a non-negative number.");
+  return n;
 }
 
 function withFilters(cmd: Command): Command {
@@ -97,7 +112,8 @@ function withCommonOptions(cmd: Command): Command {
     .option("--json", "machine readable output")
     .addOption(
       new Option("--csv", "comma-separated output with a header and total").conflicts("json"),
-    );
+    )
+    .option("--budget <usd>", "exit with code 1 if total cost exceeds this amount", parseBudget);
 }
 
 const program = new Command();

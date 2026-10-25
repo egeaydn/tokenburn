@@ -63,3 +63,24 @@ describe("CLI CSV output", () => {
     expect(result.stderr).toContain("cannot be used with option");
   });
 });
+
+describe("CLI --budget", () => {
+  it("exits 1 with a stderr warning when spend exceeds the budget", () => {
+    const result = run(["daily", "--json", "--budget", "0"]);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Over budget");
+    expect(() => JSON.parse(result.stdout)).not.toThrow();
+  }, 30_000);
+
+  it("exits 0 when spend is within the budget", () => {
+    const result = run(["daily", "--budget", "1000000"]);
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+  }, 30_000);
+
+  it("rejects a non-numeric budget", () => {
+    const result = run(["daily", "--budget", "abc"]);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("--budget");
+  }, 30_000);
+});

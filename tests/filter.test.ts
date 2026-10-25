@@ -1,10 +1,11 @@
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { aggregate, totalOf } from "../src/core/aggregate.js";
-import { filterByDate, parseDate } from "../src/core/filter.js";
+import { filterByDate, filterByModel, parseDate, parseLast } from "../src/core/filter.js";
 import { renderJson } from "../src/output/json.js";
 import { claudeCodeProvider } from "../src/providers/claude-code.js";
 import { selectProviders } from "../src/providers/index.js";
+import type { UsageRecord } from "../src/providers/types.js";
 
 const fixtureDir = fileURLToPath(new URL("./fixtures/claude", import.meta.url));
 const records = () => claudeCodeProvider([fixtureDir]).read();
@@ -68,5 +69,29 @@ describe("renderJson", () => {
       parsed.rows.reduce((s: number, r: { costUSD: number }) => s + r.costUSD, 0),
       10,
     );
+  });
+});
+
+describe("parseLast", () => {
+  const now = new Date(2026, 9, 25, 15, 30);
+  it("includes today in the span", () => {
+    expect(parseLast("1d", now)).toEqual(new Date(2026, 9, 25));
+    expect(parseLast("7d", now)).toEqual(new Date(2026, 9, 19));
+    expect(parseLast("2w", now)).toEqual(new Date(2026, 9, 12));
+  });
+  it("rejects bad input", () => {
+    for (const bad of ["0d", "7", "d", "7m", "-1d"]) expect(() => parseLast(bad, now)).toThrow();
+  });
+});
+
+describe("filterByModel", () => {
+  it("keeps records whose model contains any name, ignoring case", async () => {
+    const rec = (model: string) => ({ model }) as UsageRecord;
+    async function* src() {
+      yield* [rec("claude-opus-4"), rec("claude-sonnet-4"), rec("gpt-5")];
+    }
+    const out: string[] = [];
+    for await (const r of filterByModel(src(), ["OPUS", "gpt"])) out.push(r.model);
+    expect(out).toEqual(["claude-opus-4", "gpt-5"]);
   });
 });

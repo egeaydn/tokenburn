@@ -9,6 +9,7 @@ const columns: (keyof Row)[] = [
   "cacheReadTokens",
   "cacheWriteTokens",
   "costUSD",
+  "cacheSavedUSD",
   "unpricedModels",
 ];
 

@@ -58,6 +58,12 @@ export function renderTable(rows: Row[], total: Row, opts: TableOptions): string
     pc.bold(pc.yellow(cost(total))),
   ]);
   let out = table.toString();
+  const cacheIn = total.inputTokens + total.cacheReadTokens + total.cacheWriteTokens;
+  if (total.cacheReadTokens > 0) {
+    const hit = ((total.cacheReadTokens / cacheIn) * 100).toFixed(0);
+    out += `
+${pc.dim(`Cache: ${hit}% of input tokens served from cache, net saving $${total.cacheSavedUSD.toFixed(2)}`)}`;
+  }
   if (total.unpricedModels.length > 0) {
     out += `\n${pc.dim(`* price unknown for: ${total.unpricedModels.join(", ")} (not included in cost)`)}`;
   }

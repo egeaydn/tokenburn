@@ -72,6 +72,8 @@ Want another tool? Adding an adapter is one file, see [docs/writing-an-adapter.m
 |---|---|
 | `tokenburn daily` | Usage and cost per day (default) |
 | `tokenburn monthly` | Usage and cost per month |
+| `tokenburn model` | Usage and cost per model, biggest first |
+| `tokenburn today` / `tokenburn week` | Per-day table for today / the last 7 days |
 | `tokenburn project` | Usage and cost per working directory, biggest first, merged across tools |
 | `tokenburn report` | Self-contained HTML report with charts |
 
@@ -81,9 +83,12 @@ Options shared by all of them:
 |---|---|
 | `--since <date>` / `--until <date>` | `YYYY-MM-DD`, local time, both inclusive |
 | `--provider <names>` | `claude-code`, `codex`, or both comma separated |
-| `--json` | Machine-readable output (`daily`, `monthly`, `project`) |
-| `--csv` | CSV output with a header, usage rows and a total (`daily`, `monthly`, `project`) |
-| `--budget <usd>` | Print a warning to stderr and exit with code 1 if total cost exceeds the amount (`daily`, `monthly`, `project`) |
+| `--model <names>` | Only models whose name contains one of these, e.g. `--model opus,sonnet` |
+| `--last <n>` | Last N days (`7d`) or weeks (`2w`), today included; instead of `--since`/`--until` |
+| `--top <n>` | Show only the first n rows (biggest spenders for `project` and `model`); the total still covers everything (`daily`, `monthly`, `project`, `model`) |
+| `--json` | Machine-readable output (`daily`, `monthly`, `project`, `model`) |
+| `--csv` | CSV output with a header, usage rows and a total (`daily`, `monthly`, `project`, `model`) |
+| `--budget <usd>` | Print a warning to stderr and exit with code 1 if total cost exceeds the amount (`daily`, `monthly`, `project`, `model`) |
 
 Export a report for a spreadsheet:
 

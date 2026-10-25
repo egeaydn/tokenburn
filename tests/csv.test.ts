@@ -3,7 +3,7 @@ import { type Row, totalOf } from "../src/core/aggregate.js";
 import { renderCsv } from "../src/output/csv.js";
 
 const header =
-  "key,models,providers,inputTokens,outputTokens,cacheReadTokens,cacheWriteTokens,costUSD,unpricedModels";
+  "key,models,providers,inputTokens,outputTokens,cacheReadTokens,cacheWriteTokens,costUSD,cacheSavedUSD,unpricedModels";
 const row = (overrides: Partial<Row> = {}): Row => ({
   key: "2026-10-12",
   models: [],
@@ -13,6 +13,7 @@ const row = (overrides: Partial<Row> = {}): Row => ({
   cacheReadTokens: 300,
   cacheWriteTokens: 400,
   costUSD: 0.1234567,
+  cacheSavedUSD: 0,
   unpricedModels: [],
   ...overrides,
 });
@@ -23,9 +24,9 @@ describe("renderCsv", () => {
     expect(renderCsv(rows, totalOf(rows))).toBe(
       [
         header,
-        "2026-10-12,[],[],1000,200,300,400,0.1234567,[]",
-        "2026-11-02,[],[],1000,200,300,400,0.2,[]",
-        `Total,[],[],2000,400,600,800,${0.1234567 + 0.2},[]`,
+        "2026-10-12,[],[],1000,200,300,400,0.1234567,0,[]",
+        "2026-11-02,[],[],1000,200,300,400,0.2,0,[]",
+        `Total,[],[],2000,400,600,800,${0.1234567 + 0.2},0,[]`,
       ].join("\r\n"),
     );
   });
@@ -55,12 +56,12 @@ describe("renderCsv", () => {
     const lists = '"[""known"",""future,model""]","[""claude-code"",""codex""]"';
     const csv = renderCsv(rows, totalOf(rows));
     expect(csv).toContain(
-      `\r\n2026-10-12,${lists},1000,200,300,400,0.1234567,"[""future,model""]"`,
+      `\r\n2026-10-12,${lists},1000,200,300,400,0.1234567,0,"[""future,model""]"`,
     );
-    expect(csv).toContain(`\r\nTotal,${lists},1000,200,300,400,0.1234567,"[""future,model""]"`);
+    expect(csv).toContain(`\r\nTotal,${lists},1000,200,300,400,0.1234567,0,"[""future,model""]"`);
   });
 
   it("exports a header and zero total when there are no rows", () => {
-    expect(renderCsv([], totalOf([]))).toBe(`${header}\r\nTotal,[],[],0,0,0,0,0,[]`);
+    expect(renderCsv([], totalOf([]))).toBe(`${header}\r\nTotal,[],[],0,0,0,0,0,0,[]`);
   });
 });

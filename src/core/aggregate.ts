@@ -1,7 +1,7 @@
 import type { UsageRecord } from "../providers/types.js";
-import { costOf, defaultPrices, type PriceTable } from "./pricing.js";
+import { cacheSavingsOf, costOf, defaultPrices, type PriceTable } from "./pricing.js";
 
-export type GroupBy = "day" | "month" | "project";
+export type GroupBy = "day" | "month" | "project" | "model";
 
 export interface Row {
   key: string;
@@ -14,6 +14,8 @@ export interface Row {
   cacheWriteTokens: number;
   /** Sum of the costs we could price. */
   costUSD: number;
+  /** Net USD saved by prompt caching (see cacheSavingsOf). */
+  cacheSavedUSD: number;
   /** Models seen in this row that have no known price. */
   unpricedModels: string[];
 }
@@ -36,7 +38,8 @@ export function normalizeProject(path: string): string {
 }
 
 function keyOf(r: UsageRecord, by: GroupBy): string {
-  return by === "project" ? normalizeProject(r.project) : bucketKey(r.timestamp, by);
+  if (by === "project") return normalizeProject(r.project);
+  return by === "model" ? r.model : bucketKey(r.timestamp, by);
 }
 
 const emptyRow = (key: string): Row => ({
@@ -48,6 +51,7 @@ const emptyRow = (key: string): Row => ({
   cacheReadTokens: 0,
   cacheWriteTokens: 0,
   costUSD: 0,
+  cacheSavedUSD: 0,
   unpricedModels: [],
 });
 
@@ -74,13 +78,14 @@ export async function aggregate(
     row.cacheWriteTokens += r.cacheWrite5mTokens + r.cacheWrite1hTokens;
     addUnique(row.models, r.model);
     addUnique(row.providers, r.provider);
+    row.cacheSavedUSD += cacheSavingsOf(r, prices);
     const cost = costOf(r, prices);
     if (cost === null) addUnique(row.unpricedModels, r.model);
     else row.costUSD += cost;
   }
   const sorted = [...rows.values()];
-  // Time buckets read chronologically; projects read biggest spender first.
-  return by === "project"
+  // Time buckets read chronologically; projects and models read biggest spender first.
+  return by === "project" || by === "model"
     ? sorted.sort((a, b) => b.costUSD - a.costUSD || a.key.localeCompare(b.key))
     : sorted.sort((a, b) => a.key.localeCompare(b.key));
 }
@@ -93,6 +98,7 @@ export function totalOf(rows: Row[]): Row {
     total.cacheReadTokens += r.cacheReadTokens;
     total.cacheWriteTokens += r.cacheWriteTokens;
     total.costUSD += r.costUSD;
+    total.cacheSavedUSD += r.cacheSavedUSD;
     for (const m of r.models) addUnique(total.models, m);
     for (const p of r.providers) addUnique(total.providers, p);
     for (const m of r.unpricedModels) addUnique(total.unpricedModels, m);

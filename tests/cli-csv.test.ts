@@ -49,7 +49,7 @@ describe("CLI CSV output", () => {
     const result = run(["daily", "--csv", "--since", "2099-01-01"]);
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("key,models,providers,inputTokens,");
-    expect(result.stdout).toContain("\r\nTotal,[],[],0,0,0,0,0,[]\n");
+    expect(result.stdout).toContain("\r\nTotal,[],[],0,0,0,0,0,0,[]\n");
     expect(result.stdout).not.toContain("No usage data found.");
   });
 
@@ -82,5 +82,28 @@ describe("CLI --budget", () => {
     const result = run(["daily", "--budget", "abc"]);
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("--budget");
+  }, 30_000);
+});
+
+describe("CLI model, --top, --last, --model", () => {
+  it("lists models and limits rows with --top while keeping the full total", () => {
+    const all = JSON.parse(run(["model", "--json"]).stdout);
+    const top = JSON.parse(run(["model", "--json", "--top", "1"]).stdout);
+    expect(all.rows.length).toBeGreaterThan(1);
+    expect(top.rows).toEqual(all.rows.slice(0, 1));
+    expect(top.total).toEqual(all.total);
+  }, 30_000);
+
+  it("filters by model substring", () => {
+    const data = JSON.parse(run(["model", "--json", "--model", "future"]).stdout);
+    expect(data.rows.map((r: Row) => r.key)).toEqual(["future-model-9"]);
+  }, 30_000);
+
+  it("today/week run, and --last conflicts with --since", () => {
+    expect(run(["today"]).status).toBe(0);
+    expect(run(["week", "--json"]).status).toBe(0);
+    const bad = run(["daily", "--last", "7d", "--since", "2026-01-01"]);
+    expect(bad.status).toBe(1);
+    expect(bad.stderr).toContain("--last");
   }, 30_000);
 });

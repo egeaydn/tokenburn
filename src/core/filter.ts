@@ -21,6 +21,25 @@ export interface DateRange {
   until?: Date;
 }
 
+/** `7d` / `2w` -> start of the day that makes the range cover the last N days, today included. */
+export function parseLast(input: string, now = new Date()): Date {
+  const m = /^(\d+)([dw])$/.exec(input.trim());
+  if (!m || Number(m[1]) < 1) throw new Error(`Invalid --last "${input}". Use e.g. 7d or 2w.`);
+  const days = Number(m[1]) * (m[2] === "w" ? 7 : 1);
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1));
+}
+
+/** Keeps records whose model contains any of `names` (case-insensitive substring). */
+export async function* filterByModel(
+  records: AsyncIterable<UsageRecord>,
+  names: string[],
+): AsyncGenerator<UsageRecord> {
+  const wanted = names.map((n) => n.toLowerCase());
+  for await (const r of records) {
+    if (wanted.some((n) => r.model.toLowerCase().includes(n))) yield r;
+  }
+}
+
 export async function* filterByDate(
   records: AsyncIterable<UsageRecord>,
   { since, until }: DateRange,

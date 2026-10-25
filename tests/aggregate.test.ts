@@ -36,4 +36,18 @@ describe("aggregate", () => {
     );
     expect(total.unpricedModels).toEqual(["future-model-9"]);
   });
+
+  it("groups by model, biggest spender first, and tracks net cache savings", async () => {
+    const rows = await aggregate(records(), "model");
+    expect(rows.length).toBeGreaterThan(1);
+    expect(rows.map((r) => r.costUSD)).toEqual(
+      [...rows.map((r) => r.costUSD)].sort((a, b) => b - a),
+    );
+    expect(rows.every((r) => r.models.length === 1 && r.models[0] === r.key)).toBe(true);
+    const total = totalOf(rows);
+    expect(total.cacheSavedUSD).toBeCloseTo(
+      rows.reduce((s, r) => s + r.cacheSavedUSD, 0),
+      10,
+    );
+  });
 });

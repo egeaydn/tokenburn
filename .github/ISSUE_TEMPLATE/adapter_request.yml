@@ -1,24 +1,36 @@
-name: Support for another tool
-description: Ask for (or offer to write) an adapter for another AI coding tool
-labels: [adapter, good first issue]
+name: Adapter request
+description: Ask for support for a new AI coding tool
+labels: ["adapter", "enhancement"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Adapters read a tool's local logs. Only tools that store per-request token counts on disk can be supported. Cursor and Copilot currently don't, so please check before asking.
   - type: input
     id: tool
     attributes:
-      label: Tool
-      description: Name and version
+      label: Tool name and version
     validations:
       required: true
   - type: textarea
-    id: logs
+    id: location
     attributes:
-      label: Where does it store session logs locally?
-      description: "Path and format. Does it record token counts per request? If not, it cannot be supported honestly."
+      label: Where does it store its logs?
+      description: The path(s) on each OS if you know them. Use ~ for your home folder.
+    validations:
+      required: true
+  - type: textarea
+    id: format
+    attributes:
+      label: Redacted log line shape
+      description: Field names and types only. Replace all values and content with placeholders.
+      render: json
     validations:
       required: true
   - type: checkboxes
-    id: help
+    id: willing
     attributes:
       label: Contribution
       options:
-        - label: I would like to write this adapter (see docs/writing-an-adapter.md)
+        - label: I'm willing to write this adapter myself, with guidance from the wiki
+          required: false

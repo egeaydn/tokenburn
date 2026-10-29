@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Question or idea
+  - name: Security vulnerability
+    url: https://github.com/egeaydn/tokenburn/security/advisories/new
+    about: Please report security issues privately, not as a public issue.
+  - name: Question or discussion
     url: https://github.com/egeaydn/tokenburn/discussions
-    about: Ask a question or share an idea
+    about: For general questions, ideas, and help using tokenburn.

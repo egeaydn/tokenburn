@@ -1,24 +1,74 @@
 name: Bug report
-description: Wrong numbers, a crash, or a log line that is misread
-labels: [bug]
+description: Something is broken or the numbers look wrong
+labels: ["bug"]
 body:
-  - type: textarea
-    id: what
+  - type: markdown
     attributes:
-      label: What happened?
-      description: What did you run, what did you expect, what did you get?
+      value: |
+        Thanks for taking the time to report this. Please don't paste raw log content: it can contain prompts and code. A redacted line shape is enough.
+  - type: input
+    id: version
+    attributes:
+      label: tokenburn version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
     validations:
       required: true
   - type: input
-    id: versions
+    id: node
     attributes:
-      label: Versions
-      description: "tokenburn version, Node version, OS, and the tool + version whose logs are involved (e.g. Claude Code 2.1.x)"
+      label: Node.js version
+      description: Output of `node -v`
+      placeholder: "v22.x"
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Which tool is affected?
+      options:
+        - Claude Code
+        - Codex CLI
+        - Both / not sure
     validations:
       required: true
   - type: textarea
-    id: logshape
+    id: command
     attributes:
-      label: Shape of the log line (optional)
-      description: "If a log line is misread, paste it with prompts, code and paths removed. Never paste private content."
+      label: Command you ran
+      render: shell
+      placeholder: "npx tokenburn-ai daily --provider claude-code"
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output or error
+      description: Paste the terminal output. Remove anything private, such as paths with your name.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: false
+  - type: textarea
+    id: redacted-log
+    attributes:
+      label: Redacted log line shape (if the parser is involved)
+      description: Keep the field names and types, replace all values with placeholders.
       render: json
+    validations:
+      required: false

@@ -28,7 +28,7 @@ describe("CLI CSV output", () => {
       const json = run([command, "--json"]);
       expect(csv.error).toBeUndefined();
       expect(csv.status).toBe(0);
-      expect(csv.stderr).toBe("");
+      expect(csv.stderr).toContain("Price unknown for: future-model-9");
       expect(json.status).toBe(0);
       const data = JSON.parse(json.stdout) as { rows: Row[]; total: Omit<Row, "key"> };
       expect(data.rows.length).toBeGreaterThan(0);
@@ -105,5 +105,24 @@ describe("CLI model, --top, --last, --model", () => {
     const bad = run(["daily", "--last", "7d", "--since", "2026-01-01"]);
     expect(bad.status).toBe(1);
     expect(bad.stderr).toContain("--last");
+  }, 30_000);
+});
+
+describe("CLI --sort, month, --watch", () => {
+  it("sorts day rows by cost with --sort cost", () => {
+    const rows: Row[] = JSON.parse(run(["daily", "--json", "--sort", "cost"]).stdout).rows;
+    const costs = rows.map((r) => r.costUSD);
+    expect(costs).toEqual([...costs].sort((a, b) => b - a));
+  }, 30_000);
+
+  it("rejects an unknown --sort value", () => {
+    expect(run(["daily", "--sort", "nope"]).status).toBe(1);
+  }, 30_000);
+
+  it("month runs and --watch conflicts with --json", () => {
+    expect(run(["month"]).status).toBe(0);
+    const bad = run(["daily", "--watch", "--json"]);
+    expect(bad.status).toBe(1);
+    expect(bad.stderr).toContain("cannot be used with option");
   }, 30_000);
 });

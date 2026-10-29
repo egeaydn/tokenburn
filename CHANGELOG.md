@@ -3,6 +3,7 @@
 ## Unreleased
 
 - `--csv` output for `daily`, `monthly` and `project`
+- `--watch [seconds]` live mode, `--sort cost|key`, `month` command, and a stderr warning for unpriced models in `--json`/`--csv`
 - `--budget <usd>`: warn on stderr and exit with code 1 when total cost exceeds the limit
 - `model` command, plus `--model` and `--top` filters
 - `today` and `week` commands, and `--last 7d` / `--last 2w`

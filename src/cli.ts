@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { Command, InvalidArgumentError, Option } from "commander";
 import pc from "picocolors";
 import pkg from "../package.json" with { type: "json" };
-import { aggregate, type GroupBy, totalOf } from "./core/aggregate.js";
+import { aggregate, bucketKey, type GroupBy, totalOf } from "./core/aggregate.js";
 import { filterByDate, filterByModel, parseDate, parseLast } from "./core/filter.js";
 import { shortenPaths } from "./core/paths.js";
 import { buildReport } from "./core/report.js";
@@ -25,6 +25,8 @@ interface Options {
   last?: string;
   model?: string;
   top?: number;
+  sort?: "cost" | "key";
+  watch?: number | true;
 }
 
 interface ReportOptions extends Options {
@@ -78,6 +80,9 @@ async function* allRecords(names: string[] | undefined): AsyncGenerator<UsageRec
 
 async function run(by: GroupBy, label: string, opts: Options) {
   const rows = await aggregate(selectRecords(opts), by);
+  if (opts.sort === "cost")
+    rows.sort((a, b) => b.costUSD - a.costUSD || a.key.localeCompare(b.key));
+  else if (opts.sort === "key") rows.sort((a, b) => a.key.localeCompare(b.key));
   const total = totalOf(rows);
   const spent = total.costUSD;
   const shown = opts.top ? rows.slice(0, opts.top) : rows;
@@ -98,12 +103,32 @@ async function run(by: GroupBy, label: string, opts: Options) {
       }),
     );
   }
+  // The table prints its own footnote; machine formats get the warning on stderr.
+  if ((opts.json || opts.csv) && total.unpricedModels.length > 0) {
+    console.error(
+      pc.yellow(`Price unknown for: ${total.unpricedModels.join(", ")} (not included in cost).`),
+    );
+  }
   // stderr keeps --json/--csv stdout parseable; exit 1 lets CI fail on overspend.
   if (opts.budget !== undefined && spent > opts.budget) {
     console.error(
       pc.red(`Over budget: $${spent.toFixed(2)} spent, limit $${opts.budget.toFixed(2)}.`),
     );
     process.exitCode = 1;
+  }
+}
+
+const defaultWatchSeconds = 5;
+
+/** Runs once, or with --watch redraws the screen every N seconds until Ctrl+C. */
+async function runOrWatch(by: GroupBy, label: string, opts: Options) {
+  if (opts.watch === undefined) return run(by, label, opts);
+  const seconds = opts.watch === true ? defaultWatchSeconds : opts.watch;
+  for (;;) {
+    process.stdout.write("[2J[H");
+    await run(by, label, opts);
+    console.log(pc.dim(`Refreshing every ${seconds}s. Ctrl+C to stop.`));
+    await new Promise((done) => setTimeout(done, seconds * 1000));
   }
 }
 
@@ -140,6 +165,17 @@ function withCommonOptions(cmd: Command): Command {
       "show only the first n rows (biggest spenders for project/model)",
       parseTop,
     )
+    .addOption(
+      new Option("--sort <by>", "row order: cost (biggest first) or key (alphabetical)").choices([
+        "cost",
+        "key",
+      ]),
+    )
+    .addOption(
+      new Option("--watch [seconds]", "redraw every N seconds (default 5)")
+        .argParser(parseTop)
+        .conflicts(["json", "csv"]),
+    )
     .option("--budget <usd>", "exit with code 1 if total cost exceeds this amount", parseBudget);
 }
 
@@ -151,25 +187,29 @@ program
 
 withCommonOptions(
   program.command("daily", { isDefault: true }).description("Usage and cost per day (default)"),
-).action((o) => run("day", "Date", o));
+).action((o) => runOrWatch("day", "Date", o));
 withCommonOptions(program.command("monthly").description("Usage and cost per month")).action((o) =>
-  run("month", "Month", o),
+  runOrWatch("month", "Month", o),
 );
 
 withCommonOptions(
   program.command("project").description("Usage and cost per project (working directory)"),
-).action((o) => run("project", "Project", o));
+).action((o) => runOrWatch("project", "Project", o));
 
 withCommonOptions(program.command("model").description("Usage and cost per model")).action((o) =>
-  run("model", "Model", o),
+  runOrWatch("model", "Model", o),
 );
 
 withCommonOptions(program.command("today").description("Usage and cost for today")).action((o) =>
-  run("day", "Date", { ...o, last: "1d" }),
+  runOrWatch("day", "Date", { ...o, last: "1d" }),
 );
 withCommonOptions(program.command("week").description("Usage and cost for the last 7 days")).action(
-  (o) => run("day", "Date", { ...o, last: "7d" }),
+  (o) => runOrWatch("day", "Date", { ...o, last: "7d" }),
 );
+
+withCommonOptions(
+  program.command("month").description("Usage and cost since the 1st of this month"),
+).action((o) => runOrWatch("day", "Date", { ...o, since: `${bucketKey(new Date(), "month")}-01` }));
 
 withFilters(
   program.command("report").description("Write a self-contained HTML report (works offline)"),

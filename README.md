@@ -76,6 +76,7 @@ Want another tool? Adding an adapter is one file, see [docs/writing-an-adapter.m
 | `tokenburn monthly` | Usage and cost per month |
 | `tokenburn model` | Usage and cost per model, biggest first |
 | `tokenburn today` / `tokenburn week` | Per-day table for today / the last 7 days |
+| `tokenburn month` | Per-day table since the 1st of this month (handy with `--budget`) |
 | `tokenburn project` | Usage and cost per working directory, biggest first, merged across tools |
 | `tokenburn report` | Self-contained HTML report with charts |
 
@@ -91,6 +92,8 @@ Options shared by all of them:
 | `--json` | Machine-readable output (`daily`, `monthly`, `project`, `model`) |
 | `--csv` | CSV output with a header, usage rows and a total (`daily`, `monthly`, `project`, `model`) |
 | `--budget <usd>` | Print a warning to stderr and exit with code 1 if total cost exceeds the amount (`daily`, `monthly`, `project`, `model`) |
+| `--sort <cost\|key>` | Row order: biggest cost first, or alphabetical |
+| `--watch [seconds]` | Redraw every N seconds (default 5) until Ctrl+C; not combinable with `--json`/`--csv` |
 
 Export a report for a spreadsheet:
 
